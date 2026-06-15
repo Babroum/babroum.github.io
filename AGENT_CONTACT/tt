@@ -1,18 +1,18 @@
 import os
 import json
 import requests
-
-VOTRE_CLE_GROQ = "ta cle"    # Doit commencer par gsk_
-VOTRE_CLE_TAVILY = "ta cle"  # Doit commencer par tvly_
-
-os.environ["GROQ_API_KEY"] = VOTRE_CLE_GROQ
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from tavily import TavilyClient
 
+load_dotenv()
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 # Initialisation du client Tavily
-tavily_client = TavilyClient(api_key=VOTRE_CLE_TAVILY)
+tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
 
 @tool
 def web_search(query: str) -> str:
@@ -30,7 +30,7 @@ tools = [web_search]
 llm = ChatGroq(
     model="llama-3.3-70b-versatile", 
     temperature=0,
-    groq_api_key=os.environ["GROQ_API_KEY"], # Correction : Virgule ajoutée ici
+    groq_api_key=GROQ_API_KEY, # Correction : Virgule ajoutée ici
     
 ).bind_tools(tools)
 
