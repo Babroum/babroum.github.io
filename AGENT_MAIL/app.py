@@ -13,6 +13,7 @@ app = Flask(__name__)
 app_logger = SimpleLogger(file_path='veilles.log')
 bg_thread = None
 bg_stop_event = None
+STOP_FLAG = os.path.join(os.getcwd(), 'stop_veille.flag')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -37,7 +38,14 @@ def index():
             run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, logger=app_logger)
 
         def repeating_run(stop_event):
-            while not stop_event.is_set():
+            # remove any existing stop flag when starting
+            try:
+                if os.path.exists(STOP_FLAG):
+                    os.remove(STOP_FLAG)
+            except Exception:
+                pass
+
+            while not stop_event.is_set() and not os.path.exists(STOP_FLAG):
                 run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, logger=app_logger)
                 # attendre l'intervalle ou sortir si on demande l'arrêt
                 stop_event.wait(interval_val)
@@ -72,6 +80,12 @@ def index():
             if bg_thread and bg_thread.is_alive():
                 app_logger.info("Une tâche est déjà en cours. Arrêtez-la d'abord (/stop).")
             else:
+                # clear stop flag when starting
+                try:
+                    if os.path.exists(STOP_FLAG):
+                        os.remove(STOP_FLAG)
+                except Exception:
+                    pass
                 bg_stop_event = threading.Event()
                 bg_thread = threading.Thread(target=repeating_run, args=(bg_stop_event,), daemon=True)
                 bg_thread.start()
@@ -101,11 +115,18 @@ def logs():
 @app.route('/stop')
 def stop():
     global bg_thread, bg_stop_event
+    # create stop flag (works across gunicorn workers) and set event if present
+    try:
+        with open(STOP_FLAG, 'w') as f:
+            f.write('stop')
+    except Exception as e:
+        app_logger.error(f"Impossible de créer stop flag: {e}")
+
     if bg_stop_event:
         bg_stop_event.set()
         app_logger.info("Signal d'arrêt envoyé à la tâche background.")
     else:
-        app_logger.info("Aucune tâche répétée en cours.")
+        app_logger.info("Aucun thread local, stop flag créé pour arrêter la tâche en cours.")
     return redirect(url_for('logs'))
 
 

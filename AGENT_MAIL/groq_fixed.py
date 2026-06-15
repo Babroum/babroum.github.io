@@ -391,6 +391,8 @@ def send_email(resultats, sender=None, password=None, recipients=None, logger=No
     html += "</body></html>"
 
     # Envoi individualisé
+    if logger:
+        logger.info(f"🔐 Expéditeur: {sender[:3]}*** (mot de passe {'ok' if password else 'vide'}) | Destinataires: {recipients}")
     for idx, dest in enumerate(recipients, 1):
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "📰 Veille académique - Économie & Gestion"
@@ -399,8 +401,12 @@ def send_email(resultats, sender=None, password=None, recipients=None, logger=No
         msg.attach(MIMEText(html, "html"))
 
         try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            if logger:
+                logger.info(f"🔌 Tentative connexion SMTP pour {dest} ({idx}/{len(recipients)})")
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as server:
                 server.login(sender, password)
+                if logger:
+                    logger.info("🔑 Authentification SMTP réussie")
                 server.sendmail(sender, [dest], msg.as_string())
                 logger.info(f"✉️  Email envoyé à {dest} ({idx}/{len(recipients)})")
         except Exception as e:
