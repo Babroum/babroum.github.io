@@ -311,7 +311,7 @@ Résume en 2-3 phrases simples et directes."""
         return (article['summary'][:150] + "...").replace("<br>", " ").replace("<p>", "").replace("</p>", "")
 
 
-def send_email(resultats, sender=None, password=None, recipients=None, delay_between=None, logger=None):
+def send_email(resultats, sender=None, password=None, recipients=None, logger=None):
     """Envoie l'email en itérant sur chaque destinataire avec un délai optionnel.
 
     - `recipients` attend une liste d'adresses.
@@ -360,17 +360,9 @@ def send_email(resultats, sender=None, password=None, recipients=None, delay_bet
         except Exception as e:
             logger.error(f"❌ Erreur email pour {dest}: {e}")
 
-        # Délai entre envois si demandé
-        if delay_between and idx < len(recipients):
-            try:
-                import time
-                time.sleep(float(delay_between))
-                logger.info(f"⏱ Pause de {delay_between}s avant le prochain envoi")
-            except Exception:
-                logger.error("⚠️ Erreur pendant la pause entre envois")
 
 # --- Main ---
-def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=None, delay_between=None, keywords=None, logger=None):
+def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=None, keywords=None, logger=None):
     """Point d'entrée utilisable depuis une interface.
 
     - `recipients_csv`: chaîne avec adresses séparées par des virgules.
@@ -406,7 +398,7 @@ def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=N
     resultats = summarize_with_groq(articles_par_sujet)
 
     if resultats:
-        send_email(resultats, sender=EMAIL_EXPEDITEUR, password=EMAIL_MOT_DE_PASSE, recipients=DESTINATAIRES, delay_between=delay_between, logger=logger)
+        send_email(resultats, sender=EMAIL_EXPEDITEUR, password=EMAIL_MOT_DE_PASSE, recipients=DESTINATAIRES, logger=logger)
     else:
         logger.info("⚠️  Groq n'a rien sélectionné")
 

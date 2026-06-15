@@ -23,14 +23,9 @@ def index():
         recipients = request.form.get('recipients')
         groq_key = request.form.get('groq_key')
         newsapi_key = request.form.get('newsapi_key')
-        delay = request.form.get('delay') or '0'
         interval = request.form.get('interval') or '0'
 
         # Convertir les valeurs en float (sécurité)
-        try:
-            delay_val = float(delay)
-        except Exception:
-            delay_val = 0
         try:
             interval_val = float(interval)
         except Exception:
@@ -39,11 +34,11 @@ def index():
         global bg_thread, bg_stop_event
 
         def single_run():
-            run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, delay_between=delay_val, logger=app_logger)
+            run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, logger=app_logger)
 
         def repeating_run(stop_event):
             while not stop_event.is_set():
-                run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, delay_between=delay_val, logger=app_logger)
+                run_watch(sender, password, recipients, groq_api_key=groq_key, newsapi_key=newsapi_key, logger=app_logger)
                 # attendre l'intervalle ou sortir si on demande l'arrêt
                 stop_event.wait(interval_val)
 
