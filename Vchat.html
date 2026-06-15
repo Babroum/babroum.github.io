@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My AI - Chat Interface</title>
+    <link rel="stylesheet" href="Vchat.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231a1a1a' stroke='%2387CEEB' stroke-width='4'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-weight='bold' font-size='24' text-anchor='middle' fill='%2387CEEB'%3EAI%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        (function() {
+            const hex = localStorage.getItem('app_theme_color') || '#87CEEB';
+            document.documentElement.style.setProperty('--theme-color', hex);
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            document.documentElement.style.setProperty('--theme-rgb', `${r}, ${g}, ${b}`);
+        })();
+    </script>
+</head>
+<body>
+    <canvas id="sphereCanvas"></canvas>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <canvas id="logoCanvas"></canvas>
+                    </div>
+                    <span class="app-name">My AI</span>
+                </div>
+                <button class="new-chat-btn">
+                    <span>✏️</span>
+                    <span>Nouveau chat</span>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-title">Vos chats</div>
+                    <div id="chatHistory" class="chat-history">
+                        <div class="empty-state">Aucune conversation pour le moment</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="chat-area" id="chatArea">
+                <div class="welcome-message" id="welcomeMessage">
+                    <h1 id="welcomeText">Ravi de vous revoir</h1>
+                    <p>Comment puis-je vous aider aujourd'hui ?</p>
+                </div>
+                <div id="messagesContainer" class="messages-container"></div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Poser une question">
+                    <button class="send-btn" id="sendBtn">↑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="Vchat.js"></script>
+</body>
+</html>
