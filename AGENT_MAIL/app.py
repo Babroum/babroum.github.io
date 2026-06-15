@@ -42,6 +42,30 @@ def index():
                 # attendre l'intervalle ou sortir si on demande l'arrêt
                 stop_event.wait(interval_val)
 
+        # Créer/.mettre à jour .env si besoin
+        def write_env_if_missing(sender, password, groq_key, newsapi_key):
+            env_path = os.path.join(os.getcwd(), '.env')
+            # Si .env existe déjà, ne rien faire (ne pas écraser)
+            if os.path.exists(env_path):
+                app_logger.info('.env existe déjà — pas d\'écriture')
+                return
+
+            try:
+                with open(env_path, 'w', encoding='utf-8') as f:
+                    if sender:
+                        f.write(f"EMAIL_EXPEDITEUR={sender}\n")
+                    if password:
+                        f.write(f"EMAIL_MOT_DE_PASSE={password}\n")
+                    if groq_key:
+                        f.write(f"GROQ_API_KEY={groq_key}\n")
+                    if newsapi_key:
+                        f.write(f"NEWSAPI_KEY={newsapi_key}\n")
+                app_logger.info(f".env créé : {env_path}")
+            except Exception as e:
+                app_logger.error(f"Impossible d'écrire .env: {e}")
+
+        write_env_if_missing(sender, password, groq_key, newsapi_key)
+
         # Lancer selon interval
         if interval_val and interval_val > 0:
             # Si une tâche est déjà en cours, on refuse de lancer une seconde

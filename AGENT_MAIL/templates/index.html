@@ -29,14 +29,11 @@
       <label>Clé NewsAPI
         <input name="newsapi_key" type="text" value="{{ newsapi_key|default('') }}" />
       </label>
-      <label>Délai entre envois individuels (secondes)
-        <input name="delay" type="number" min="0" step="1" value="{{ delay|default('0') }}" />
-      </label>
       <label>Intervalle entre exécutions répétées (secondes, 0 = une seule exécution)
         <input name="interval" type="number" min="0" step="1" value="{{ interval|default('0') }}" />
       </label>
       <button type="submit">Lancer la veille (background)</button>
     </form>
-    <p><a href="/logs">Voir les logs</a> · <a href="/stop">Arrêter la tâche</a></p>
+    <p><a href="./AGENT_MAIL/templates/logs">Voir les logs</a></p>
   </body>
 </html>
