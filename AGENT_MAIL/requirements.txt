@@ -3,3 +3,4 @@ feedparser
 requests
 groq
 python-dotenv
+gunicorn
