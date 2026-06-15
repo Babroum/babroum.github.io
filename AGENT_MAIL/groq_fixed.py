@@ -28,7 +28,7 @@ NEWSAPI_KEY = os.environ.get("NEWSAPI_KEY") # Gratuit, limité à 100 req/jour
 NEWSAPI_URL = "https://newsapi.org/v2/everything"
 
 # Bing News API (alternative, génère RSS dynamiquement)
-def get_feeds_from_newsapi():
+def get_feeds_from_newsapi(logger=None):
     """Récupère les articles via NewsAPI pour les mots-clés"""
     import requests
     feeds = []
@@ -58,14 +58,20 @@ def get_feeds_from_newsapi():
                 data = response.json()
                 if data.get("articles"):
                     feeds.append((f"NewsAPI: {query}", data.get("articles", [])))
-                    print(f"✅ {len(data.get('articles', []))} articles trouvés pour '{query}'")
+                    if logger:
+                        logger.info(f"✅ {len(data.get('articles', []))} articles trouvés pour '{query}'")
+                    else:
+                        print(f"✅ {len(data.get('articles', []))} articles trouvés pour '{query}'")
         except Exception as e:
-            print(f"⚠️  Erreur NewsAPI pour '{query}': {e}")
+            if logger:
+                logger.error(f"⚠️  Erreur NewsAPI pour '{query}': {e}")
+            else:
+                print(f"⚠️  Erreur NewsAPI pour '{query}': {e}")
     
     return feeds
 
 
-def get_feeds_from_rss():
+def get_feeds_from_rss(logger=None):
     """Récupère les flux RSS"""
     articles_par_sujet = []
     for nom, url in FEEDS_RSS:
@@ -84,9 +90,15 @@ def get_feeds_from_rss():
                     break
             if articles:
                 articles_par_sujet.append((nom, articles))
-                print(f"✅ {len(articles)} articles trouvés dans {nom}")
+                if logger:
+                    logger.info(f"✅ {len(articles)} articles trouvés dans {nom}")
+                else:
+                    print(f"✅ {len(articles)} articles trouvés dans {nom}")
         except Exception as e:
-            print(f"⚠️  Erreur en parsant {nom}: {e}")
+            if logger:
+                logger.error(f"⚠️  Erreur en parsant {nom}: {e}")
+            else:
+                print(f"⚠️  Erreur en parsant {nom}: {e}")
     return articles_par_sujet
 
 EMAIL_EXPEDITEUR = os.environ.get("EMAIL_EXPEDITEUR")  # Récupéré depuis .env
@@ -168,14 +180,20 @@ class SimpleLogger:
         return self.lines[-max_lines:]
 
 # --- Récupération et filtrage ---
-def fetch_articles():
+def fetch_articles(logger=None):
     """Combine NewsAPI + RSS"""
-    print("\n🔍 Récupération des articles...\n")
+    if logger:
+        logger.info("🔍 Récupération des articles...")
+    else:
+        print("\n🔍 Récupération des articles...\n")
     articles_par_sujet = []
     
     # 1. Essayer NewsAPI en premier (+ rapide, + moderne)
-    print("📡 NewsAPI en cours...", flush=True)
-    newsapi_feeds = get_feeds_from_newsapi()
+    if logger:
+        logger.info("📡 NewsAPI en cours...")
+    else:
+        print("📡 NewsAPI en cours...", flush=True)
+    newsapi_feeds = get_feeds_from_newsapi(logger=logger)
     
     for nom, articles_list in newsapi_feeds:
         filtered = []
@@ -191,14 +209,20 @@ def fetch_articles():
             articles_par_sujet.append((nom, filtered[:4]))
     
     # 2. Complémenter avec RSS (pour la diversité)
-    print("📰 RSS en cours...", flush=True)
-    rss_feeds = get_feeds_from_rss()
+    if logger:
+        logger.info("📰 RSS en cours...")
+    else:
+        print("📰 RSS en cours...", flush=True)
+    rss_feeds = get_feeds_from_rss(logger=logger)
     articles_par_sujet.extend(rss_feeds)
     
-    print(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
+    if logger:
+        logger.info(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
+    else:
+        print(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
     return articles_par_sujet
 
-def summarize_with_groq(articles_par_sujet):
+def summarize_with_groq(articles_par_sujet, logger=None):
     client = Groq(api_key=GROQ_API_KEY)
 
     # Aplatir tous les articles
@@ -208,10 +232,16 @@ def summarize_with_groq(articles_par_sujet):
             tous_les_articles.append({**article, "source": nom})
 
     if not tous_les_articles:
-        print("❌ Aucun article trouvé")
+        if logger:
+            logger.info("❌ Aucun article trouvé")
+        else:
+            print("❌ Aucun article trouvé")
         return []
 
-    print(f"📚 {len(tous_les_articles)} articles à traiter...")
+    if logger:
+        logger.info(f"📚 {len(tous_les_articles)} articles à traiter...")
+    else:
+        print(f"📚 {len(tous_les_articles)} articles à traiter...")
 
     content = "\n\n".join([
         f"[{i+1}] ({a['source']}) {a['title']}\n{a['summary'][:200]}"
@@ -241,7 +271,10 @@ Articles:
         )
 
         raw = response.choices[0].message.content.strip()
-        print(f"🔍 Réponse brute de Groq: '{raw}'")
+        if logger:
+            logger.info(f"🔍 Réponse brute de Groq: '{raw}'")
+        else:
+            print(f"🔍 Réponse brute de Groq: '{raw}'")
 
         # Parser robuste: cherche tous les nombres
         numeros = []
@@ -251,19 +284,27 @@ Articles:
             if 0 <= idx < len(tous_les_articles):
                 numeros.append(idx)
 
-        print(f"✅ Articles sélectionnés: {[i+1 for i in numeros[:4]]}")
+        if logger:
+            logger.info(f"✅ Articles sélectionnés: {[i+1 for i in numeros[:4]]}")
+        else:
+            print(f"✅ Articles sélectionnés: {[i+1 for i in numeros[:4]]}")
         return [tous_les_articles[i] for i in numeros[:4]]
 
     except Exception as e:
-        print(f"❌ Erreur Groq: {e}")
+        if logger:
+            logger.error(f"❌ Erreur Groq: {e}")
+        else:
+            print(f"❌ Erreur Groq: {e}")
         return []
 
 
-def generate_resume(article):
+def generate_resume(article, logger=None):
     """Génère 2-3 phrases de résumé via Groq (sans préambule)"""
     client = Groq(api_key=GROQ_API_KEY)
     
     try:
+        if logger:
+            logger.info(f"✍️  Génération résumé pour: {article.get('title')[:80]}")
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             temperature=0.2,
@@ -306,7 +347,10 @@ Résume en 2-3 phrases simples et directes."""
         return raw.strip()
     
     except Exception as e:
-        print(f"⚠️  Erreur résumé: {e}")
+        if logger:
+            logger.error(f"⚠️  Erreur résumé: {e}")
+        else:
+            print(f"⚠️  Erreur résumé: {e}")
         # Fallback : premiers 150 caractères du contenu original
         return (article['summary'][:150] + "...").replace("<br>", " ").replace("<p>", "").replace("</p>", "")
 
@@ -330,9 +374,11 @@ def send_email(resultats, sender=None, password=None, recipients=None, logger=No
         return
 
     # Construire le HTML commun
+    if logger:
+        logger.info(f"🧩 Construction du HTML pour {len(resultats)} articles")
     html = "<html><body><h2>📰 Articles essentiels du jour</h2><hr>"
     for i, article in enumerate(resultats, 1):
-        resume = generate_resume(article)
+        resume = generate_resume(article, logger=logger)
         html += f"""
         <p>
             <strong>[{i}] {article['title']}</strong><br>
@@ -386,7 +432,7 @@ def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=N
 
     logger.info("🚀 Démarrage de la veille (depuis interface)")
     try:
-        articles_par_sujet = fetch_articles()
+        articles_par_sujet = fetch_articles(logger=logger)
     except Exception as e:
         logger.error(f"❌ Erreur récupération articles: {e}")
         return
@@ -395,10 +441,17 @@ def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=N
         logger.error("❌ Aucun flux accessible")
         return
 
-    resultats = summarize_with_groq(articles_par_sujet)
+    try:
+        resultats = summarize_with_groq(articles_par_sujet, logger=logger)
+    except Exception as e:
+        logger.error(f"❌ Erreur pendant le résumé Groq: {e}")
+        return
 
     if resultats:
-        send_email(resultats, sender=EMAIL_EXPEDITEUR, password=EMAIL_MOT_DE_PASSE, recipients=DESTINATAIRES, logger=logger)
+        try:
+            send_email(resultats, sender=EMAIL_EXPEDITEUR, password=EMAIL_MOT_DE_PASSE, recipients=DESTINATAIRES, logger=logger)
+        except Exception as e:
+            logger.error(f"❌ Erreur lors de l'envoi des emails: {e}")
     else:
         logger.info("⚠️  Groq n'a rien sélectionné")
 
@@ -406,4 +459,4 @@ def run_watch(sender, password, recipients_csv, groq_api_key=None, newsapi_key=N
 if __name__ == "__main__":
     # Comportement historique quand on lance le script directement
     logger = SimpleLogger()
-    run_watch(EMAIL_EXPEDITEUR, EMAIL_MOT_DE_PASSE, ",".join(DESTINATAIRES), groq_api_key=GROQ_API_KEY, newsapi_key=NEWSAPI_KEY, delay_between=0, logger=logger)
+    run_watch(EMAIL_EXPEDITEUR, EMAIL_MOT_DE_PASSE, ",".join(DESTINATAIRES), groq_api_key=GROQ_API_KEY, newsapi_key=NEWSAPI_KEY, logger=logger)
