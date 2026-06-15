@@ -35,8 +35,26 @@
       <button type="submit">Lancer la veille (background)</button>
     </form>
     <p>
-      <a href="/logs">Voir les logs</a> |
-      <a href="/stop">Arrêter la veille</a>
+      <a href="./AGENT_MAIL/templates/logs.html" onclick="gotoLogs(event)">Voir les logs</a> |
+      <a href="./AGENT_MAIL/templates/logs.html" onclick="stopVeille(event)">Arrêter la veille</a>
     </p>
+
+    <script>
+      function gotoLogs(e){
+        e.preventDefault();
+        fetch('/logs', { method: 'GET' }).then(resp => {
+          if(resp.ok) window.location = '/logs';
+          else window.location = './AGENT_MAIL/templates/logs.html';
+        }).catch(() => { window.location = './AGENT_MAIL/templates/logs.html'; });
+      }
+
+      function stopVeille(e){
+        e.preventDefault();
+        fetch('/stop', { method: 'GET' }).then(resp => {
+          if(resp.ok) window.location = '/logs';
+          else window.location = './AGENT_MAIL/templates/logs.html';
+        }).catch(() => { window.location = './AGENT_MAIL/templates/logs.html'; });
+      }
+    </script>
   </body>
 </html>
