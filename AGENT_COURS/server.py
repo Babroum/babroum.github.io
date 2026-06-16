@@ -230,12 +230,34 @@ def executer_session_de_veille():
         nom_fichier = f.get('name')
         
         texte_cours = lire_contenu_pdf(id_fichier)
-        print(f"[ROUTINE] 🧠 Audit juridique par Groq pour : '{nom_fichier}'...")
+        print(f"[ROUTINE] 🧠 Audit et mise à jour IA pour : '{nom_fichier}'...")
         
+        # =========================================================================
+        # 🧠 PROMPT UNIVERSEL ET INTELLIGENT (MODIFIÉ ICI)
+        # =========================================================================
         prompt_analyse = (
-            f"Tu es un éminent professeur de droit français. Analyse le cours suivant :\n\n"
-            f"{texte_cours}\n\n"
-            "Mission : Réécris ce texte pour le rendre conforme en 2026."
+            f"Tu es un professeur universitaire de haut niveau, expert multidisciplinaire. "
+            f"Tu dois auditer et réécrire le contenu du cours suivant pour le mettre à jour en 2026 :\n\n"
+            f"Titre du fichier : {nom_fichier}\n"
+            f"Contenu extrait : \n{texte_cours}\n\n"
+            "INSTRUCTIONS DE MISE À JOUR CONTEXTUELLE (Selon la matière détectée) :\n\n"
+            
+            "1. SI LE COURS CONCERNE LE DROIT :\n"
+            "- Mets à jour les lois, jurisprudences et réglementations pour qu'elles soient parfaitement conformes à l'année 2026 (ex: évolutions du RGPD, IA Act européen, régulation des plateformes, etc.).\n"
+            "- Conserve une rigueur juridique stricte, cite les codes ou principes applicables si nécessaire.\n\n"
+            
+            "2. SI LE COURS CONCERNE LA COMMUNICATION COMMERCIALE OU LE MARKETING :\n"
+            "- Ne te limite pas au cadre légal. Intègre impérativement les dernières mutations stratégiques, sociologiques et technologiques de la communication en 2026.\n"
+            "- Inclus l'impact de l'IA générative dans la création de campagnes publicitaires, la fin définitive des cookies tiers pour le ciblage, les nouvelles dynamiques sur les réseaux verticaux (comme TikTok), et les exigences absolues de transparence (RSE, lutte contre le greenwashing).\n"
+            "- Évoque également la convergence vers le commerce unifié (Social Commerce).\n\n"
+            
+            "3. POUR TOUS LES AUTRES TYPES DE COURS :\n"
+            "- Actualise les données factuelles, les statistiques, et modernise les exemples pour les ancrer dans la réalité économique et sociale de 2026.\n\n"
+            
+            "CONSIGNES FORMELLES DE RENDU :\n"
+            "- Conserve scrupuleusement la structure et le plan d'origine du document (Titres, sections, parties).\n"
+            "- Rédige dans un style purement académique, fluide et pédagogique.\n"
+            "- Ne fais aucune référence textuelle ou méta-commentaire sur ces consignes (pas de 'Voici la version mise à jour'). Donne directement le cours réécrit."
         )
         
         try:
