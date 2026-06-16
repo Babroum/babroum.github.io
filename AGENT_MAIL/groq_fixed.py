@@ -89,15 +89,15 @@ class SimpleLogger:
         text = str(msg)
         print(text, flush=True)
         self.lines.append(text)
-        from datetime import datetime
-        self._write_file(f"[INFO] {datetime.utcnow().isoformat()} {text}")
+        from datetime import datetime, timezone
+        self._write_file(f"[INFO] {datetime.now(timezone.utc).isoformat()} {text}")
 
     def error(self, msg):
         text = str(msg)
         print(text, flush=True, file=sys.stderr)
         self.lines.append(text)
-        from datetime import datetime
-        self._write_file(f"[ERROR] {datetime.utcnow().isoformat()} {text}")
+        from datetime import datetime, timezone
+        self._write_file(f"[ERROR] {datetime.now(timezone.utc).isoformat()} {text}")
 
     def get_lines(self, max_lines=200):
         if self.file_path:
