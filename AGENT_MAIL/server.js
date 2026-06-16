@@ -102,6 +102,7 @@ function runPythonAgent(config) {
             EMAIL_EXPEDITEUR:   config.senderEmail,
             EMAIL_MOT_DE_PASSE: config.appPassword,
             DESTINATAIRES:      config.recipients.join(','),
+            DISABLE_EMAIL: mailConfig.disableEmail ? "true" : "false",
             GEMINI_API_KEY:     config.geminiApiKey || process.env.GEMINI_API_KEY || '',
             GROQ_API_KEY:       config.groqApiKey   || process.env.GROQ_API_KEY   || '',
             NEWSAPI_KEY:        config.newsApiKey    || process.env.NEWSAPI_KEY    || '',
