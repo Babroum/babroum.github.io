@@ -1,8 +1,7 @@
-strands-agents
-strands-agents-tools
-python-dotenv 
-strands-agents[gemini]
-google-genai>=2.0.0
-linkup-sdk
-fastapi
-uvicorn[standard]
+strands-agents[gemini]==1.43.0
+strands-agents-tools==0.8.0
+linkup-sdk==0.18.2
+fastapi==0.115.0
+uvicorn[standard]>=0.31.1
+python-dotenv==1.0.1
+requests==2.32.3

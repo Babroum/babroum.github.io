@@ -8,11 +8,14 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .agent import run_agent
+try:
+    from .agent import run_agent
+except ImportError:
+    from agent import run_agent
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
-UI_DIR = PROJECT_DIR / "UI"
+UI_DIR = PACKAGE_DIR / "UI"
 CSV_FILES = {
     "universities": PROJECT_DIR / "universities.csv",
     "emails": PROJECT_DIR / "emails.csv",

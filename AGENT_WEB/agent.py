@@ -12,7 +12,10 @@ from strands import Agent, tool
 from strands.models.gemini import GeminiModel
 from linkup import LinkupClient
 import logging
-from .system_prompt import SYSTEM_PROMPT
+try:
+    from .system_prompt import SYSTEM_PROMPT
+except ImportError:
+    from system_prompt import SYSTEM_PROMPT
 import requests
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 import csv
