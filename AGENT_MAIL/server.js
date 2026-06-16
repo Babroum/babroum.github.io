@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,10 +18,32 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Données persistantes
-const CONFIG_FILE = 'mail_config.json';
+// ==========================================
+// DONNÉES PERSISTANTES
+// ==========================================
+const CONFIG_FILE = path.join(__dirname, 'mail_config.json');
 let mailConfig = null;
 let cronJob = null;
+
+// État interne de l'agent (pour la UI)
+let agentState = {
+    running: false,
+    lastRunAt: null,
+    lastRunStatus: null, // 'success' | 'error'
+    lastRunMessage: '',
+    logs: []
+};
+
+function pushLog(msg, level = 'info') {
+    const entry = { ts: new Date().toISOString(), level, msg };
+    agentState.logs.push(entry);
+    if (agentState.logs.length > 200) agentState.logs.shift();
+    console.log(`[${level.toUpperCase()}] ${msg}`);
+    // Notifier les clients SSE
+    sseClients.forEach(res => {
+        res.write(`data: ${JSON.stringify(entry)}\n\n`);
+    });
+}
 
 function loadConfig() {
     try {
@@ -41,190 +64,223 @@ function saveConfig(config) {
     }
 }
 
-// Fonction pour envoyer un email
-async function sendVeilleEmail(config) {
-    if (!config || !config.senderEmail || !config.recipients.length) {
-        throw new Error('Configuration incomplète');
-    }
+// ==========================================
+// SSE — LOGS EN TEMPS RÉEL
+// ==========================================
+const sseClients = new Set();
 
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: config.senderEmail,
-            pass: config.appPassword
-        }
+app.get('/api/logs/stream', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // Envoyer l'historique récent
+    agentState.logs.slice(-50).forEach(entry => {
+        res.write(`data: ${JSON.stringify(entry)}\n\n`);
     });
 
-    const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body { font-family: Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; background: rgba(42,42,42,0.5); border-radius: 8px; }
-                h1 { color: #87CEEB; margin-bottom: 20px; }
-                .article { background: rgba(58,58,58,0.3); padding: 16px; margin: 16px 0; border-left: 3px solid #87CEEB; border-radius: 4px; }
-                .article h2 { font-size: 16px; color: #87CEEB; margin: 0 0 8px 0; }
-                .article p { margin: 0; font-size: 14px; color: #d0d0d0; }
-                .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid rgba(58,58,58,0.3); font-size: 12px; color: #8a8a8a; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>📰 Veille Économie & Gestion</h1>
-                <p>Bonjour,</p>
-                <p>Voici votre veille automatique du jour. Les articles les plus pertinents sur l'économie et la gestion sont ci-dessous.</p>
-                
-                <div class="article">
-                    <h2>Article 1 : Exemple</h2>
-                    <p>Contenu de l'article placeholder.</p>
-                </div>
+    sseClients.add(res);
+    req.on('close', () => sseClients.delete(res));
+});
 
-                <div class="article">
-                    <h2>Article 2 : Exemple</h2>
-                    <p>Contenu de l'article placeholder.</p>
-                </div>
+// ==========================================
+// LANCEMENT DU SCRIPT PYTHON
+// ==========================================
+function runPythonAgent(config) {
+    return new Promise((resolve, reject) => {
+        if (agentState.running) {
+            reject(new Error('Un envoi est déjà en cours, veuillez patienter.'));
+            return;
+        }
 
-                <div class="footer">
-                    <p>Cet email a été envoyé automatiquement par votre Agent Mail. <a href="https://your-render-url.onrender.com" style="color: #87CEEB;">Configurer</a></p>
-                </div>
-            </div>
-        </body>
-        </html>
-    `;
+        agentState.running = true;
+        pushLog('🚀 Démarrage de la veille…');
 
-    const mailOptions = {
-        from: config.senderEmail,
-        to: config.recipients.join(','),
-        subject: '📰 Veille Économie & Gestion',
-        html: html
-    };
+        const env = {
+            ...process.env,
+            EMAIL_EXPEDITEUR: config.senderEmail,
+            EMAIL_MOT_DE_PASSE: config.appPassword,
+            DESTINATAIRES: config.recipients.join(','),
+            GROQ_API_KEY: config.groqApiKey || process.env.GROQ_API_KEY || '',
+            NEWSAPI_KEY: config.newsApiKey || process.env.NEWSAPI_KEY || '',
+        };
 
-    await transporter.sendMail(mailOptions);
+        const scriptPath = path.join(__dirname, 'groq_fixed.py');
+        const py = spawn('python3', [scriptPath], { env });
+
+        let stderr = '';
+
+        py.stdout.on('data', data => {
+            data.toString().split('\n').filter(Boolean).forEach(line => pushLog(line, 'info'));
+        });
+
+        py.stderr.on('data', data => {
+            const text = data.toString();
+            stderr += text;
+            text.split('\n').filter(Boolean).forEach(line => pushLog(line, 'error'));
+        });
+
+        py.on('error', err => {
+            agentState.running = false;
+            agentState.lastRunStatus = 'error';
+            agentState.lastRunMessage = `Impossible de lancer python3 : ${err.message}`;
+            agentState.lastRunAt = new Date().toISOString();
+            pushLog(`❌ ${agentState.lastRunMessage}`, 'error');
+            reject(new Error(agentState.lastRunMessage));
+        });
+
+        py.on('close', code => {
+            agentState.running = false;
+            agentState.lastRunAt = new Date().toISOString();
+
+            if (code === 0) {
+                agentState.lastRunStatus = 'success';
+                agentState.lastRunMessage = 'Veille envoyée avec succès ✓';
+                pushLog(`✅ ${agentState.lastRunMessage}`, 'info');
+                resolve(agentState.lastRunMessage);
+            } else {
+                agentState.lastRunStatus = 'error';
+                agentState.lastRunMessage = `Le script s'est terminé avec le code ${code}`;
+                pushLog(`❌ ${agentState.lastRunMessage}`, 'error');
+                reject(new Error(agentState.lastRunMessage));
+            }
+        });
+    });
 }
 
-// Routes API
+// ==========================================
+// ROUTES API
+// ==========================================
+
+// 0. Valeurs par défaut depuis les variables d'environnement Render
+app.get('/api/env-defaults', (req, res) => {
+    res.json({
+        senderEmail:  process.env.EMAIL_EXPEDITEUR  || '',
+        // On ne renvoie jamais le mot de passe en clair dans la réponse,
+        // mais on indique s'il est défini côté serveur pour pré-remplir le placeholder
+        appPasswordSet: !!(process.env.EMAIL_MOT_DE_PASSE),
+        groqApiKey:   process.env.GROQ_API_KEY   || '',
+        newsApiKey:   process.env.NEWSAPI_KEY     || '',
+    });
+});
 
 // 1. Sauvegarder la configuration
 app.post('/api/config', (req, res) => {
     try {
         const config = req.body;
-
-        // Validation basique
         if (!config.senderEmail || !config.appPassword || !Array.isArray(config.recipients) || config.recipients.length === 0) {
             return res.status(400).json({ message: 'Configuration incomplète' });
         }
-
         saveConfig(config);
         setupScheduler(config);
-
         res.json({ message: 'Configuration sauvegardée', success: true });
     } catch (e) {
         res.status(500).json({ message: e.message });
     }
 });
 
-// 2. Test de connexion email
+// 2. Test de connexion email (nodemailer SMTP verify)
 app.post('/api/test-email', async (req, res) => {
     try {
         const { senderEmail, appPassword } = req.body;
-
         if (!senderEmail || !appPassword) {
             return res.status(400).json({ message: 'Email et mot de passe requis' });
         }
-
         const transporter = nodemailer.createTransport({
             service: 'gmail',
-            auth: {
-                user: senderEmail,
-                pass: appPassword
-            }
+            auth: { user: senderEmail, pass: appPassword }
         });
-
         await transporter.verify();
         res.json({ message: 'Connexion SMTP vérifiée avec succès ✓' });
     } catch (e) {
-        console.error('Test email error:', e);
         res.status(401).json({ message: 'Erreur authentification Gmail : ' + (e.message || 'Vérifiez vos identifiants') });
     }
 });
 
-// 3. Envoyer maintenant
+// 3. Lancer la veille maintenant (Python → Groq → email)
 app.post('/api/send-now', async (req, res) => {
     try {
         const config = req.body;
-
-        if (!config.senderEmail || !config.recipients.length) {
+        if (!config.senderEmail || !config.appPassword || !config.recipients?.length) {
             return res.status(400).json({ message: 'Configuration incomplète' });
         }
-
-        await sendVeilleEmail(config);
-        res.json({ message: `Email envoyé à ${config.recipients.length} destinataire(s) ✓` });
+        // Répondre immédiatement, le travail tourne en arrière-plan
+        res.json({ message: 'Veille lancée — suivez les logs en temps réel ⏳', async: true });
+        runPythonAgent(config).catch(err => {
+            pushLog(`❌ Erreur background: ${err.message}`, 'error');
+        });
     } catch (e) {
-        console.error('Send email error:', e);
-        res.status(500).json({ message: 'Erreur envoi email: ' + e.message });
+        res.status(500).json({ message: e.message });
     }
 });
 
-// 4. Récupérer la configuration
+// 4. Statut de l'agent
+app.get('/api/status', (req, res) => {
+    res.json(agentState);
+});
+
+// 5. Historique des logs (snapshot)
+app.get('/api/logs', (req, res) => {
+    res.json(agentState.logs.slice(-100));
+});
+
+// 6. Récupérer la configuration sauvegardée
 app.get('/api/config', (req, res) => {
-    if (mailConfig) {
-        res.json(mailConfig);
-    } else {
-        res.json(null);
-    }
+    res.json(mailConfig || null);
 });
 
-// Setup du scheduler
+// ==========================================
+// SCHEDULER CRON
+// ==========================================
 function setupScheduler(config) {
-    // Arrêter l'ancien job
-    if (cronJob) {
-        cronJob.stop();
-    }
+    if (cronJob) { cronJob.stop(); cronJob = null; }
 
     if (!config.enableSchedule || !config.sendTime) {
-        console.log('Scheduler désactivé');
+        pushLog('ℹ️  Scheduler désactivé');
         return;
     }
 
     const [hours, minutes] = config.sendTime.split(':');
+    const cronExpr = `${minutes} ${hours} * * *`;
 
-    // Cron format: minute hour * * *
-    const cronExpression = `${minutes} ${hours} * * *`;
-
-    cronJob = cron.schedule(cronExpression, async () => {
-        console.log(`[${new Date().toISOString()}] Envoi automatique déclenché`);
-        try {
-            await sendVeilleEmail(config);
-            console.log('[OK] Email envoyé avec succès');
-        } catch (e) {
-            console.error('[ERROR] Erreur envoi automatique:', e.message);
-        }
+    cronJob = cron.schedule(cronExpr, () => {
+        pushLog(`⏰ Envoi automatique déclenché (${config.sendTime})`);
+        runPythonAgent(config).catch(e => pushLog(`❌ Envoi auto échoué : ${e.message}`, 'error'));
     });
 
-    console.log(`✓ Scheduler activé: ${cronExpression} (${config.sendTime})`);
+    pushLog(`✅ Scheduler activé : ${cronExpr} (${config.sendTime})`);
 }
 
-// Servir les fichiers statiques
+// ==========================================
+// SERVEUR STATIQUE
+// ==========================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'mail-agent.html'));
 });
 
-// Démarrage du serveur
+// ==========================================
+// DÉMARRAGE
+// ==========================================
 loadConfig();
-if (mailConfig && mailConfig.enableSchedule) {
-    setupScheduler(mailConfig);
-}
+if (mailConfig?.enableSchedule) setupScheduler(mailConfig);
 
 app.listen(PORT, () => {
     console.log(`🚀 Agent Mail démarré sur le port ${PORT}`);
-    console.log(`📍 Accédez à http://localhost:${PORT}`);
 });
 
-// Gestion arrêt gracieux
+// Arrêt gracieux
 process.on('SIGTERM', () => {
-    console.log('Arrêt gracieux...');
     if (cronJob) cronJob.stop();
     process.exit(0);
+});
+
+// Empêcher le crash total sur exception non gérée
+process.on('uncaughtException', err => {
+    pushLog(`💥 Exception non gérée: ${err.message}`, 'error');
+    // on ne quitte PAS — le serveur reste en ligne
+});
+
+process.on('unhandledRejection', reason => {
+    pushLog(`💥 Promise rejetée: ${reason}`, 'error');
 });

@@ -629,3 +629,54 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== PANNEAU LOGS EN DIRECT ===== */
+.log-panel {
+    max-width: 700px;
+    margin: 0 auto 24px;
+    background: rgba(10, 14, 26, 0.7);
+    border: 1px solid rgba(135, 206, 235, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: rgba(135, 206, 235, 0.08);
+    border-bottom: 1px solid rgba(135, 206, 235, 0.15);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theme-color);
+}
+
+.clear-logs-btn {
+    background: none;
+    border: none;
+    color: #8a8a8a;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.clear-logs-btn:hover { color: var(--error); }
+
+.log-content {
+    padding: 12px;
+    height: 220px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.log-line { padding: 1px 0; }
+.log-line.log-info  { color: #c8e6c9; }
+.log-line.log-error { color: #ef9a9a; }
+
+/* bouton désactivé pendant l'envoi */
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
