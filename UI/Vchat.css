@@ -1,0 +1,145 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --theme-color: #87CEEB;
+    --theme-rgb: 135, 206, 235;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a1a; color: #e0e0e0; height: 100vh; overflow: hidden; position: relative;
+}
+
+#sphereCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.7; }
+
+.container { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+.sidebar {
+    width: 260px; background: rgba(23, 23, 23, 0.3); backdrop-filter: blur(15px);
+    display: flex; flex-direction: column; border-right: 1px solid rgba(42, 42, 42, 0.6);
+}
+
+.sidebar-header { padding: 16px; border-bottom: 1px solid rgba(42, 42, 42, 0.6); }
+
+.logo-section { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.logo { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.logo canvas { width: 100%; height: 100%; }
+.app-name { font-size: 18px; font-weight: 600; color: #ffffff; }
+
+.new-chat-btn {
+    width: 100%; padding: 10px 16px; background: rgba(42, 42, 42, 0.5);
+    border: 1px solid rgba(58, 58, 58, 0.6); border-radius: 8px; color: #e0e0e0;
+    cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: background 0.2s;
+}
+.new-chat-btn:hover { background: rgba(51, 51, 51, 0.6); }
+
+.sidebar-menu { padding: 16px 8px; flex: 1; overflow-y: auto; }
+.menu-section { margin-top: 20px; }
+.menu-section-title { padding: 8px 12px; font-size: 12px; font-weight: 600; color: #8a8a8a; text-transform: uppercase; letter-spacing: 0.5px; }
+.downloads-panel { display: flex; flex-direction: column; gap: 8px; padding: 0 8px; }
+.download-btn {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(42, 42, 42, 0.5);
+    border: 1px solid rgba(58, 58, 58, 0.6);
+    border-radius: 8px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    transition: all 0.2s;
+}
+.download-btn:hover:not(:disabled) {
+    background: rgba(var(--theme-rgb), 0.15);
+    border-color: rgba(var(--theme-rgb), 0.6);
+    color: #ffffff;
+}
+.download-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.history-item {
+    padding: 10px 12px; margin-bottom: 2px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; color: #b0b0b0; transition: all 0.2s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.history-item:hover { background: rgba(42, 42, 42, 0.5); color: #ffffff; }
+
+/* Highlight actif dynamique géré par JS, mais on garde une base propre */
+.history-item[style*="background"] {
+    background: rgba(var(--theme-rgb), 0.2) !important;
+    border-left: 3px solid var(--theme-color) !important;
+}
+
+.main-content { flex: 1; display: flex; flex-direction: column; background: transparent; }
+
+.chat-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px; overflow-y: auto; }
+.chat-area.has-messages { justify-content: flex-start; align-items: stretch; }
+
+.welcome-message h1 { font-size: 32px; color: #ffffff; margin-bottom: 12px; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8); }
+.welcome-message p { font-size: 16px; color: #d0d0d0; }
+.welcome-message.hidden { display: none; }
+
+.messages-container { width: 100%; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.message { display: flex; gap: 16px; animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.message-avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: rgba(42, 42, 42, 0.6); backdrop-filter: blur(10px); overflow: hidden;
+    border: 1px solid rgba(var(--theme-rgb), 0.2); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.message.user .message-avatar { background: rgba(102, 126, 234, 0.3); }
+.message.ai .message-avatar { background: rgba(var(--theme-rgb), 0.15); }
+
+.message-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.message-author { font-weight: 600; font-size: 14px; color: #ffffff; }
+.message-time { font-size: 12px; color: #8a8a8a; }
+.message-text { color: #e0e0e0; line-height: 1.6; font-size: 15px; }
+
+.message.ai .message-text {
+    background: rgba(42, 42, 42, 0.4); backdrop-filter: blur(10px);
+    padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(58, 58, 58, 0.3);
+}
+
+.input-container { width: 100%; max-width: 800px; padding: 0 24px 24px; margin: 0 auto; }
+.input-wrapper {
+    position: relative; display: flex; align-items: center;
+    background: rgba(42, 42, 42, 0.6); backdrop-filter: blur(15px);
+    border: 1px solid rgba(58, 58, 58, 0.6); border-radius: 24px; padding: 4px;
+    transition: border-color 0.2s;
+}
+.input-wrapper:focus-within { border-color: var(--theme-color); }
+.chat-input { flex: 1; background: transparent; border: none; outline: none; padding: 12px 16px; color: #e0e0e0; font-size: 15px; }
+
+.send-btn {
+    width: 40px; height: 40px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 50%;
+    transition: all 0.2s; background: var(--theme-color); color: white;
+}
+.send-btn:hover { filter: brightness(1.1); }
+
+/* BOUTON RETOUR */
+.send-btn1 {
+    position: fixed; bottom: 30px; left: 65px; width: 120px; height: 50px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    border-radius: 25px; transition: all 0.3s ease;
+    background: rgba(var(--theme-rgb), 0.1); 
+    border: 1px solid rgba(var(--theme-rgb), 0.3); 
+    color: var(--theme-color);
+    font-size: 0.9rem; font-weight: 600;
+    box-shadow: 0 4px 15px rgba(var(--theme-rgb), 0.4);
+    z-index: 20; animation: pulse-glow 3s infinite;
+}
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px rgba(var(--theme-rgb), 0.1); }
+    50% { box-shadow: 0 0 15px rgba(var(--theme-rgb), 0.3); }
+    100% { box-shadow: 0 0 5px rgba(var(--theme-rgb), 0.1); }
+}
+.send-btn1:hover {
+    background: rgba(var(--theme-rgb), 0.2); border-color: var(--theme-color);
+    color: white; transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(var(--theme-rgb), 0.4); animation: none;
+}

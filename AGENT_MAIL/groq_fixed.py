@@ -21,7 +21,7 @@ GEMINI_OK = False
 GROQ_OK   = False
 
 try:
-    import google.genai as genai
+    from google import genai
     GEMINI_OK = True
 except ImportError:
     pass  # géré dans run_watch
@@ -131,8 +131,7 @@ class LLMClient:
         self._gemini_ok = False
         if gemini_key and GEMINI_OK:
             try:
-                genai.configure(api_key=gemini_key)
-                self._gemini_model = genai.GenerativeModel(self.GEMINI_MODEL)
+                self._gemini_client = genai.Client(api_key=gemini_key)
                 self._gemini_ok    = True
                 logger.info(f"✅ LLM principal : Gemini ({self.GEMINI_MODEL})")
             except Exception as e:
@@ -156,9 +155,14 @@ class LLMClient:
             sys.exit(1)
 
     def _call_gemini(self, system_prompt, user_prompt):
-        """Appel Gemini — lève une exception si ça rate."""
+        """Appel Gemini avec la nouvelle API SDK google-genai"""
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
-        response    = self._gemini_model.generate_content(full_prompt)
+        
+        # Nouvelle syntaxe pour générer du contenu
+        response = self._gemini_client.models.generate_content(
+            model=self.GEMINI_MODEL,
+            contents=full_prompt,
+        )
         return response.text.strip()
 
     def _call_groq(self, system_prompt, user_prompt, max_tokens=200):
