@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Mail - Configuration</title>
+    <link rel="stylesheet" href="mail-agent.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231a1a1a' stroke='%2387CEEB' stroke-width='4'/%3E%3Ctext x='32' y='42' font-family='Arial' font-weight='bold' font-size='20' text-anchor='middle' fill='%2387CEEB'%3E✉️%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+    <canvas id="sphereCanvas"></canvas>
+
+    <div class="container">
+        <!-- SIDEBAR GAUCHE -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <canvas id="logoCanvas"></canvas>
+                    </div>
+                    <span class="app-name">Agent Mail</span>
+                </div>
+                <div class="status-badge" id="statusBadge">
+                    <span class="status-dot"></span>
+                    <span>Inactif</span>
+                </div>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-title">Configuration</div>
+                    <div class="config-info">
+                        <div class="info-row">
+                            <span class="label">État :</span>
+                            <span class="value" id="configStatus">Non configuré</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Prochaine veille :</span>
+                            <span class="value" id="nextSchedule">--:-- (--)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Destinataires :</span>
+                            <span class="value" id="recipientCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-section-title">Historique</div>
+                    <div id="historyList" class="history-list">
+                        <div class="empty-state">Aucun envoi pour le moment</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>⚙️ Configuration Agent Mail</h1>
+                <p>Paramétrez votre veille automatique</p>
+            </div>
+
+            <form class="config-form" id="configForm">
+                <!-- SECTION 1: EMAIL EXPÉDITEUR -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>📧 Email Expéditeur</h2>
+                        <p>Compte Gmail utilisé pour envoyer les veilles</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="senderEmail">Adresse Gmail</label>
+                        <input type="email" id="senderEmail" placeholder="votre@gmail.com" required>
+                        <small>Doit être une adresse @gmail.com</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appPassword">Mot de passe d'application</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="appPassword" placeholder="xxxx xxxx xxxx xxxx" required>
+                            <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+                        </div>
+                        <small>
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank">Générer un mot de passe d'application</a>
+                            (16 caractères avec espaces)
+                        </small>
+                    </div>
+
+                    <div class="test-btn-wrapper">
+                        <button type="button" class="test-btn" id="testEmailBtn">🧪 Tester la connexion</button>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DESTINATAIRES -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>📨 Emails Destinataires</h2>
+                        <p>Qui recevra les veilles (plusieurs emails possibles)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newRecipient">Ajouter un destinataire</label>
+                        <div class="input-with-btn">
+                            <input type="email" id="newRecipient" placeholder="destinataire@exemple.com">
+                            <button type="button" class="add-btn" id="addRecipientBtn">➕ Ajouter</button>
+                        </div>
+                    </div>
+
+                    <div class="recipients-list" id="recipientsList">
+                        <div class="empty-state">Aucun destinataire</div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: PLANIFICATION -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>⏰ Planification</h2>
+                        <p>Quand envoyer les veilles automatiquement</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="intervalDays">Intervalle d'envoi (en jours)</label>
+                        <div class="input-with-range">
+                            <input type="number" id="intervalDays" min="1" max="30" value="1" required>
+                            <input type="range" id="intervalSlider" min="1" max="30" value="1">
+                        </div>
+                        <small>Envoie un email tous les <strong id="intervalDisplay">1</strong> jour(s)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sendTime">Heure d'envoi</label>
+                        <input type="time" id="sendTime" value="08:00" required>
+                        <small>Format 24h (fuseau horaire serveur)</small>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="enableSchedule" checked>
+                        <label for="enableSchedule">🤖 Activer la veille automatique</label>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: ACTIONS -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2>⚡ Actions</h2>
+                        <p>Contrôlez votre agent</p>
+                    </div>
+
+                    <div class="actions-grid">
+                        <button type="button" class="action-btn send-now" id="sendNowBtn">
+                            <span class="icon">🚀</span>
+                            <span class="text">Envoyer maintenant</span>
+                        </button>
+                        <button type="submit" class="action-btn save-config">
+                            <span class="icon">💾</span>
+                            <span class="text">Sauvegarder</span>
+                        </button>
+                        <button type="button" class="action-btn reset-btn" id="resetBtn">
+                            <span class="icon">🔄</span>
+                            <span class="text">Réinitialiser</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- NOTIFICATIONS -->
+            <div class="notification-area" id="notificationArea"></div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal" id="testModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🧪 Test de connexion</h2>
+                <button class="modal-close" id="closeTestModal">✕</button>
+            </div>
+            <div class="modal-body" id="testModalBody">
+                <p>Test en cours...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="mail-agent.js"></script>
+</body>
+</html>

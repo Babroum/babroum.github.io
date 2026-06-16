@@ -104,8 +104,7 @@ def get_feeds_from_rss(logger=None):
 EMAIL_EXPEDITEUR = os.environ.get("EMAIL_EXPEDITEUR")  # Récupéré depuis .env
 EMAIL_MOT_DE_PASSE = os.environ.get("EMAIL_MOT_DE_PASSE")  # Récupéré depuis .env
 DESTINATAIRES = [
-    "kriegelgael@gmail.com",
-    "frtombunce@gmail.com"
+    "kriegelgael@gmail.com"
 ]
 
 MOTS_CLES = [
@@ -125,12 +124,6 @@ MOTS_CLES = [
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 # Override depuis .env si disponible
-
-EMAIL_EXPEDITEUR = os.getenv("EMAIL_EXPEDITEUR", "")
-EMAIL_MOT_DE_PASSE = os.getenv("EMAIL_MOT_DE_PASSE", "")
-DESTINATAIRES = [e.strip() for e in os.getenv("DESTINATAIRES", ",".join(DESTINATAIRES)).split(",") if e.strip()]
-NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 
 class SimpleLogger:
@@ -181,46 +174,53 @@ class SimpleLogger:
 
 # --- Récupération et filtrage ---
 def fetch_articles(logger=None):
-    """Combine NewsAPI + RSS"""
-    if logger:
-        logger.info("🔍 Récupération des articles...")
+    if NEWSAPI_KEY:  # Vérifier que la clé n'est pas vide
+        # Lancer NewsAPI    
+
+        """Combine NewsAPI + RSS"""
+        if logger:
+            logger.info("🔍 Récupération des articles...")
+        else:
+            print("\n🔍 Récupération des articles...\n")
+        articles_par_sujet = []
+        
+        # 1. Essayer NewsAPI en premier (+ rapide, + moderne)
+        if logger:
+            logger.info("📡 NewsAPI en cours...")
+        else:
+            print("📡 NewsAPI en cours...", flush=True)
+        newsapi_feeds = get_feeds_from_newsapi(logger=logger)
+        
+        for nom, articles_list in newsapi_feeds:
+            filtered = []
+            for article in articles_list:
+                texte = (article.get("title", "") + article.get("description", "")).lower()
+                if any(mot in texte for mot in MOTS_CLES):
+                    filtered.append({
+                        "title":   article.get("title", ""),
+                        "link":    article.get("url", ""),
+                        "summary": article.get("description", "")
+                    })
+            if filtered:
+                articles_par_sujet.append((nom, filtered[:4]))
+        
+        # 2. Complémenter avec RSS (pour la diversité)
+        """
+        if logger:
+            logger.info("📰 RSS en cours...")
+        else:
+            print("📰 RSS en cours...", flush=True)
+        rss_feeds = get_feeds_from_rss(logger=logger)
+        articles_par_sujet.extend(rss_feeds)
+        """
+        if logger:
+            logger.info(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
+        else:
+            print(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
+        return articles_par_sujet
     else:
-        print("\n🔍 Récupération des articles...\n")
-    articles_par_sujet = []
-    
-    # 1. Essayer NewsAPI en premier (+ rapide, + moderne)
-    if logger:
-        logger.info("📡 NewsAPI en cours...")
-    else:
-        print("📡 NewsAPI en cours...", flush=True)
-    newsapi_feeds = get_feeds_from_newsapi(logger=logger)
-    
-    for nom, articles_list in newsapi_feeds:
-        filtered = []
-        for article in articles_list:
-            texte = (article.get("title", "") + article.get("description", "")).lower()
-            if any(mot in texte for mot in MOTS_CLES):
-                filtered.append({
-                    "title":   article.get("title", ""),
-                    "link":    article.get("url", ""),
-                    "summary": article.get("description", "")
-                })
-        if filtered:
-            articles_par_sujet.append((nom, filtered[:4]))
-    
-    # 2. Complémenter avec RSS (pour la diversité)
-    if logger:
-        logger.info("📰 RSS en cours...")
-    else:
-        print("📰 RSS en cours...", flush=True)
-    rss_feeds = get_feeds_from_rss(logger=logger)
-    articles_par_sujet.extend(rss_feeds)
-    
-    if logger:
-        logger.info(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
-    else:
-        print(f"\n✅ Total: {sum(len(a) for _, a in articles_par_sujet)} articles collectés\n")
-    return articles_par_sujet
+        logger.info("⚠️  NewsAPI key vide, passage au RSS")
+        return 
 
 def summarize_with_groq(articles_par_sujet, logger=None):
     client = Groq(api_key=GROQ_API_KEY)
