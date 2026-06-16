@@ -21,7 +21,7 @@ GEMINI_OK = False
 GROQ_OK   = False
 
 try:
-    import google.generativeai as genai
+    import google.genai as genai
     GEMINI_OK = True
 except ImportError:
     pass  # géré dans run_watch
@@ -43,7 +43,7 @@ NEWSAPI_KEY        = os.environ.get("NEWSAPI_KEY", "")
 NEWSAPI_URL        = "https://newsapi.org/v2/everything"
 
 _dest_env     = os.environ.get("DESTINATAIRES", "")
-DESTINATAIRES = [e.strip() for e in _dest_env.split(",") if e.strip()] or ["kriegelgael@gmail.com"]
+DESTINATAIRES = [e.strip() for e in _dest_env.split(",") if e.strip()] or [""]
 
 FEEDS_RSS = [
     ("EducPros",            "https://www.letudiant.fr/educpros/rss.xml"),
@@ -119,7 +119,7 @@ class LLMClient:
     bascule automatiquement sur Groq pour cet appel.
     """
 
-    GEMINI_MODEL = "gemini-1.5-flash"
+    GEMINI_MODEL = "gemini-2.5-flash"
     GROQ_MODEL   = "llama-3.3-70b-versatile"
 
     def __init__(self, gemini_key, groq_key, logger):
