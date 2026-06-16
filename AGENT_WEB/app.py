@@ -12,7 +12,7 @@ from .agent import run_agent
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
-UI_DIR = PROJECT_DIR / "UI"
+UI_DIR = PACKAGE_DIR / "UI"
 CSV_FILES = {
     "universities": PROJECT_DIR / "universities.csv",
     "emails": PROJECT_DIR / "emails.csv",
