@@ -99,11 +99,12 @@ function runPythonAgent(config) {
 
         const env = {
             ...process.env,
-            EMAIL_EXPEDITEUR: config.senderEmail,
+            EMAIL_EXPEDITEUR:   config.senderEmail,
             EMAIL_MOT_DE_PASSE: config.appPassword,
-            DESTINATAIRES: config.recipients.join(','),
-            GROQ_API_KEY: config.groqApiKey || process.env.GROQ_API_KEY || '',
-            NEWSAPI_KEY: config.newsApiKey || process.env.NEWSAPI_KEY || '',
+            DESTINATAIRES:      config.recipients.join(','),
+            GEMINI_API_KEY:     config.geminiApiKey || process.env.GEMINI_API_KEY || '',
+            GROQ_API_KEY:       config.groqApiKey   || process.env.GROQ_API_KEY   || '',
+            NEWSAPI_KEY:        config.newsApiKey    || process.env.NEWSAPI_KEY    || '',
         };
 
         const scriptPath = path.join(__dirname, 'groq_fixed.py');
@@ -156,12 +157,13 @@ function runPythonAgent(config) {
 // 0. Valeurs par défaut depuis les variables d'environnement Render
 app.get('/api/env-defaults', (req, res) => {
     res.json({
-        senderEmail:  process.env.EMAIL_EXPEDITEUR  || '',
+        senderEmail:    process.env.EMAIL_EXPEDITEUR  || '',
         // On ne renvoie jamais le mot de passe en clair dans la réponse,
         // mais on indique s'il est défini côté serveur pour pré-remplir le placeholder
         appPasswordSet: !!(process.env.EMAIL_MOT_DE_PASSE),
-        groqApiKey:   process.env.GROQ_API_KEY   || '',
-        newsApiKey:   process.env.NEWSAPI_KEY     || '',
+        geminiApiKey:   process.env.GEMINI_API_KEY || '',
+        groqApiKey:     process.env.GROQ_API_KEY   || '',
+        newsApiKey:     process.env.NEWSAPI_KEY     || '',
     });
 });
 

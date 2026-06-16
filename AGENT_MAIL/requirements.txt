@@ -1,6 +1,5 @@
-Flask>=2.0
-feedparser
-requests
-groq
-python-dotenv
-gunicorn
+feedparser>=6.0.11
+google-generativeai>=0.8.3
+groq>=0.11.0
+requests>=2.31.0
+python-dotenv>=1.0.1

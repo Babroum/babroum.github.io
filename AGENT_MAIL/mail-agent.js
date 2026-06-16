@@ -21,6 +21,7 @@ let config = {
     intervalDays: 1,
     sendTime: '08:00',
     enableSchedule: true,
+    geminiApiKey: '',
     groqApiKey: '',
     newsApiKey: ''
 };
@@ -43,6 +44,7 @@ loadLocalConfig();
 // ==========================================
 const senderEmailInput       = document.getElementById('senderEmail');
 const appPasswordInput       = document.getElementById('appPassword');
+const geminiApiKeyInput      = document.getElementById('geminiApiKey');
 const groqApiKeyInput        = document.getElementById('groqApiKey');
 const newsApiKeyInput        = document.getElementById('newsApiKey');
 const intervalDaysInput      = document.getElementById('intervalDays');
@@ -170,6 +172,7 @@ configForm.onsubmit = async (e) => {
     e.preventDefault();
     config.senderEmail    = senderEmailInput.value.trim();
     config.appPassword    = appPasswordInput.value.trim();
+    config.geminiApiKey   = geminiApiKeyInput ? geminiApiKeyInput.value.trim() : '';
     config.groqApiKey     = groqApiKeyInput ? groqApiKeyInput.value.trim() : '';
     config.newsApiKey     = newsApiKeyInput ? newsApiKeyInput.value.trim() : '';
     config.sendTime       = sendTimeInput.value;
@@ -240,10 +243,11 @@ sendNowBtn.onclick = async (e) => {
     // Lire les valeurs courantes du formulaire
     const currentConfig = {
         ...config,
-        senderEmail: senderEmailInput.value.trim() || config.senderEmail,
-        appPassword: appPasswordInput.value.trim() || config.appPassword,
-        groqApiKey:  groqApiKeyInput ? groqApiKeyInput.value.trim() : config.groqApiKey,
-        newsApiKey:  newsApiKeyInput ? newsApiKeyInput.value.trim() : config.newsApiKey,
+        senderEmail:  senderEmailInput.value.trim()   || config.senderEmail,
+        appPassword:  appPasswordInput.value.trim()   || config.appPassword,
+        geminiApiKey: geminiApiKeyInput ? geminiApiKeyInput.value.trim() : config.geminiApiKey,
+        groqApiKey:   groqApiKeyInput   ? groqApiKeyInput.value.trim()   : config.groqApiKey,
+        newsApiKey:   newsApiKeyInput   ? newsApiKeyInput.value.trim()   : config.newsApiKey,
     };
 
     if (!currentConfig.senderEmail || !currentConfig.appPassword) {
@@ -286,9 +290,10 @@ resetBtn.onclick = (e) => {
     e.preventDefault();
     if (confirm('Réinitialiser toute la configuration ?')) {
         localStorage.removeItem('mail_agent_config');
-        config = { senderEmail: '', appPassword: '', recipients: [], intervalDays: 1, sendTime: '08:00', enableSchedule: true, groqApiKey: '', newsApiKey: '' };
+        config = { senderEmail: '', appPassword: '', recipients: [], intervalDays: 1, sendTime: '08:00', enableSchedule: true, geminiApiKey: '', groqApiKey: '', newsApiKey: '' };
         senderEmailInput.value = '';
         appPasswordInput.value = '';
+        if (geminiApiKeyInput) geminiApiKeyInput.value = '';
         if (groqApiKeyInput) groqApiKeyInput.value = '';
         if (newsApiKeyInput) newsApiKeyInput.value = '';
         intervalDaysInput.value = 1;
@@ -327,14 +332,23 @@ function appendLog(entry) {
     logContent.appendChild(line);
     logContent.scrollTop = logContent.scrollHeight;
 
-    // Mettre à jour l'historique sidebar si succès/erreur terminal
-    if (entry.msg.includes('✅') || entry.msg.includes('succès')) {
-        addHistoryItem(entry.msg, 'success');
+    const msg = entry.msg || '';
+
+    // ✅ Succès réel = message final de la veille (pas le Scheduler)
+    if (msg.includes('Veille envoyée avec succès') || msg.includes('Veille terminée avec succès')) {
+        addHistoryItem(msg, 'success');
         sendNowBtn.disabled = false;
         sendNowBtn.querySelector('.text').textContent = 'Envoyer maintenant';
     }
-    if (entry.msg.includes('❌') && entry.msg.includes('Erreur')) {
-        addHistoryItem(entry.msg.slice(0, 60), 'error');
+
+    // ❌ Toute erreur finale : exit code, erreur background, etc.
+    if (msg.includes('❌') && (
+        msg.includes('Erreur')   ||
+        msg.includes('échoué')   ||
+        msg.includes('terminé avec le code') ||
+        msg.includes('Impossible')
+    )) {
+        addHistoryItem(msg.slice(0, 80), 'error');
         sendNowBtn.disabled = false;
         sendNowBtn.querySelector('.text').textContent = 'Envoyer maintenant';
     }
@@ -408,6 +422,7 @@ window.onload = async () => {
     // 1. Pré-remplir depuis localStorage
     senderEmailInput.value       = config.senderEmail  || '';
     appPasswordInput.value       = config.appPassword  || '';
+    if (geminiApiKeyInput) geminiApiKeyInput.value = config.geminiApiKey || '';
     if (groqApiKeyInput) groqApiKeyInput.value = config.groqApiKey || '';
     if (newsApiKeyInput) newsApiKeyInput.value = config.newsApiKey  || '';
     intervalDaysInput.value      = config.intervalDays || 1;
@@ -427,6 +442,8 @@ window.onload = async () => {
                 senderEmailInput.value = defaults.senderEmail;
             if (!appPasswordInput.value && defaults.appPasswordSet)
                 appPasswordInput.placeholder = '(défini côté serveur)';
+            if (geminiApiKeyInput && !geminiApiKeyInput.value && defaults.geminiApiKey)
+                geminiApiKeyInput.value = defaults.geminiApiKey;
             if (groqApiKeyInput && !groqApiKeyInput.value && defaults.groqApiKey)
                 groqApiKeyInput.value = defaults.groqApiKey;
             if (newsApiKeyInput && !newsApiKeyInput.value && defaults.newsApiKey)

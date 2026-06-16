@@ -664,14 +664,18 @@ body {
 
 .log-content {
     padding: 12px;
-    height: 220px;
+    height: 320px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     line-height: 1.6;
 }
 
-.log-line { padding: 1px 0; }
+.log-line {
+    padding: 2px 0;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
 .log-line.log-info  { color: #c8e6c9; }
 .log-line.log-error { color: #ef9a9a; }
 
@@ -679,4 +683,26 @@ body {
 .action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Badges priorité LLM */
+.badge-primary {
+    font-size: 11px;
+    font-weight: 700;
+    color: #FFD700;
+    background: rgba(255, 215, 0, 0.12);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
+}
+.badge-fallback {
+    font-size: 11px;
+    font-weight: 600;
+    color: #a0a0a0;
+    background: rgba(160, 160, 160, 0.1);
+    border: 1px solid rgba(160, 160, 160, 0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    vertical-align: middle;
 }

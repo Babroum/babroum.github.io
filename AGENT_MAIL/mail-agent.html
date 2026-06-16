@@ -101,9 +101,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="groqApiKey">Clé API Groq</label>
+                        <label for="geminiApiKey">Clé API Gemini <span class="badge-primary">⭐ Prioritaire</span></label>
+                        <input type="password" id="geminiApiKey" placeholder="AIza…">
+                        <small>Variable Render : <code>GEMINI_API_KEY</code> — utilisé en premier, Groq en fallback automatique</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="groqApiKey">Clé API Groq <span class="badge-fallback">🔄 Fallback</span></label>
                         <input type="password" id="groqApiKey" placeholder="gsk_…">
-                        <small>Variable Render : <code>GROQ_API_KEY</code></small>
+                        <small>Variable Render : <code>GROQ_API_KEY</code> — utilisé si Gemini est indisponible ou en quota</small>
                     </div>
 
                     <div class="form-group">
