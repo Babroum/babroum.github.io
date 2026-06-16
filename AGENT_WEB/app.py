@@ -122,9 +122,11 @@ def download_file(file_key: str) -> FileResponse:
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse("Vchat.html", headers={"Cache-Control": "no-store"})
+    return FileResponse(UI_DIR / "Vchat.html", headers={"Cache-Control": "no-store"})
 
 @app.get("/Vchat.html")
 def vchat() -> FileResponse:
-    return FileResponse("Vchat.html", headers={"Cache-Control": "no-store"})
+    return FileResponse(UI_DIR / "Vchat.html", headers={"Cache-Control": "no-store"})
 
+
+app.mount("/", NoCacheStaticFiles(directory=UI_DIR), name="ui")
