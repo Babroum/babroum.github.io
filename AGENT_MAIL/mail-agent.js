@@ -197,40 +197,6 @@ configForm.onsubmit = async (e) => {
     }
 };
 
-// ==========================================
-// 8. TEST EMAIL
-// ==========================================
-testEmailBtn.onclick = async (e) => {
-    e.preventDefault();
-    if (!senderEmailInput.value || !appPasswordInput.value) {
-        showNotification('Remplissez email et mot de passe', 'error'); return;
-    }
-    testModal.classList.add('active');
-    testModalBody.innerHTML = '<p>Test en cours... <span class="loader"></span></p>';
-    try {
-        const res = await fetch(`${API_URL}/api/test-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ senderEmail: senderEmailInput.value, appPassword: appPasswordInput.value })
-        });
-        const data = await safeJson(res);
-        if (res.ok) {
-            testModalBody.innerHTML = `<p style="color:var(--success);">✓ Connexion réussie !</p>
-                <p style="font-size:12px;color:#a0a0a0;margin-top:10px;">${data.message || ''}</p>`;
-            showNotification('Test réussi ✓', 'success');
-        } else {
-            testModalBody.innerHTML = `<p style="color:var(--error);">✗ Échec (HTTP ${res.status})</p>
-                <p style="font-size:12px;color:#ef9a9a;margin-top:8px;word-break:break-word;">${data.message || 'Erreur inconnue'}</p>
-                <p style="font-size:11px;color:#8a8a8a;margin-top:8px;">💡 Vérifiez que l'email est bien @gmail.com et que le mot de passe d'application (16 car.) est correct.</p>`;
-            showNotification('Test échoué — voir détails dans la fenêtre', 'error');
-        }
-    } catch (e) {
-        testModalBody.innerHTML = `<p style="color:var(--error);">✗ Impossible de joindre le serveur</p>
-            <p style="font-size:12px;color:#ef9a9a;margin-top:8px;">${e.message}</p>`;
-        showNotification('Erreur réseau — serveur injoignable ?', 'error');
-    }
-};
-
 closeTestModal.onclick = () => testModal.classList.remove('active');
 testModal.onclick = (e) => { if (e.target === testModal) testModal.classList.remove('active'); };
 
