@@ -1,0 +1,8 @@
+strands-agents
+strands-agents-tools
+python-dotenv 
+strands-agents[gemini]
+google-genai>=2.0.0
+linkup-sdk
+fastapi
+uvicorn[standard]
