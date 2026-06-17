@@ -71,7 +71,7 @@ GOOGLE_CONFIG = {
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uris": ["http://localhost:3000", "http://127.0.0.1:3000"]
+        "redirect_uris": ["http://localhost:8080", "http://127.0.0.1:8080"]
     }
 }
 

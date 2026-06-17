@@ -1,5 +1,5 @@
 // =========================================================================
-// SCRIPT DE SYNCHRONISATION ET CONTRÔLE DE L'AGENT DE VEILLE (PORT 3000)
+// SCRIPT DE SYNCHRONISATION ET CONTRÔLE DE L'AGENT DE VEILLE (PORT 8080)
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const boutonNouvelleAnalyse = document.getElementById('newAnalysisBtn');
     const statusText = document.getElementById('statusText');
 
-    const API_BASE_URL = 'http://localhost:3000/api';
+    const API_BASE_URL = 'http://localhost:8080/api';
 
     // Sécurité : On s'assure que les éléments existent dans le HTML actuel
     if (!selectIntervalle || !boutonNouvelleAnalyse) {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error("Erreur d'envoi du schedule :", error);
-                alert("❌ Erreur : Le serveur Flask (Port 3000) est déconnecté.");
+                alert("❌ Erreur : Le serveur Flask (Port 8080) est déconnecté.");
             } finally {
                 boutonEnregistrer.disabled = false;
                 boutonEnregistrer.innerText = "Enregistrer la fréquence";
