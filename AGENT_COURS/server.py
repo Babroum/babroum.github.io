@@ -247,27 +247,31 @@ def executer_session_de_veille():
         # =========================================================================
         prompt_analyse = (
             f"Tu es un professeur universitaire de haut niveau, expert multidisciplinaire. "
-            f"Tu dois auditer et réécrire le contenu du cours suivant pour le mettre à jour en 2026 :\n\n"
+            f"Ta mission est de réécrire le contenu du cours suivant pour le restituer de manière exhaustive tout en appliquant une veille pour l'année 2026 s'il y a lieu :\n\n"
             f"Titre du fichier : {nom_fichier}\n"
             f"Contenu extrait : \n{texte_cours}\n\n"
-            "INSTRUCTIONS DE MISE À JOUR CONTEXTUELLE (Selon la matière détectée) :\n\n"
+            "⚠️ REGLE ABSOLUE DE RECONSTRUCTION :\n"
+            "- Tu dois CONSERVER TOUTES les définitions, théories, concepts, exemples stables et informations d'origine présents dans le texte ci-dessus.\n"
+            "- Si une information ou partie du texte de base est juste, factuelle et intemporelle, RÉÉCRIS-LA EXACTEMENT TEL QUEL, sans la résumer ni la supprimer.\n"
+            "- N'ajoute des modifications, des compléments ou des corrections QUE sur les éléments nécessitant une mise à jour contextuelle pour 2026.\n\n"
             
-            "1. SI LE COURS CONCERNE LE DROIT :\n"
-            "- Mets à jour les lois, jurisprudences et réglementations pour qu'elles soient parfaitement conformes à l'année 2026 (ex: évolutions du RGPD, IA Act européen, régulation des plateformes, etc.).\n"
-            "- Conserve une rigueur juridique stricte, cite les codes ou principes applicables si nécessaire.\n\n"
+            "DIRECTIVES DE VÉRIFICATION ET DE MISE À JOUR (Selon le sujet détecté) :\n\n"
             
-            "2. SI LE COURS CONCERNE LA COMMUNICATION COMMERCIALE OU LE MARKETING :\n"
-            "- Ne te limite pas au cadre légal. Intègre impérativement les dernières mutations stratégiques, sociologiques et technologiques de la communication en 2026.\n"
-            "- Inclus l'impact de l'IA générative dans la création de campagnes publicitaires, la fin définitive des cookies tiers pour le ciblage, les nouvelles dynamiques sur les réseaux verticaux (comme TikTok), et les exigences absolues de transparence (RSE, lutte contre le greenwashing).\n"
-            "- Évoque également la convergence vers le commerce unifié (Social Commerce).\n\n"
+            "1. POUR LES COURS DE DROIT :\n"
+            "- Conserve l'intégralité du plan et des principes fondamentaux.\n"
+            "- Modifie ou actualise UNIQUEMENT les lois, les articles de codes, la jurisprudence ou les réglementations obsolètes pour qu'ils s'alignent avec les réformes réelles applicables en 2026 (ex: RGPD européen, IA Act, régulation numérique).\n\n"
             
-            "3. POUR TOUS LES AUTRES TYPES DE COURS :\n"
-            "- Actualise les données factuelles, les statistiques, et modernise les exemples pour les ancrer dans la réalité économique et sociale de 2026.\n\n"
+            "2. POUR LES COURS DE COMMUNICATION COMMERCIALE OU MARKETING :\n"
+            "- Conserve l'intégralité des fondamentaux théoriques (ex: les modèles de communication comme Shannon & Weaver ou Lasswell, les objectifs cognitifs/affectifs/conctifs, et la typologie des cibles).\n"
+            "- Mets à jour les applications pratiques de ces concepts pour refléter le paysage de 2026 : intègre comment l'IA générative transforme la création, la fin définitive des cookies tiers pour le ciblage, l'essor des réseaux verticaux (TikTok) pour toucher les cibles, les exigences de transparence RSE (anti-greenwashing) et le Social Commerce.\n\n"
+            
+            "3. POUR TOUS LES AUTRES COURS :\n"
+            "- Garde tout le contenu intact, et adapte uniquement les dates ou les vieilles statistiques pour les connecter à l'actualité économique de 2026.\n\n"
             
             "CONSIGNES FORMELLES DE RENDU :\n"
-            "- Conserve scrupuleusement la structure et le plan d'origine du document (Titres, sections, parties).\n"
-            "- Rédige dans un style purement académique, fluide et pédagogique.\n"
-            "- Ne fais aucune référence textuelle ou méta-commentaire sur ces consignes (pas de 'Voici la version mise à jour'). Donne directement le cours réécrit."
+            "- Restitue la totalité du document sous forme de cours réécrit structuré (Titres, sections, paragraphes).\n"
+            "- Rédige dans un style purement académique, rigoureux et fluide.\n"
+            "- Ne fais aucune métanarrative ni commentaire textuel (interdiction d'écrire 'Voici le texte conservé' ou 'Mise à jour effectuée'). Délivre uniquement le document finalisé."
         )
         
         try:
